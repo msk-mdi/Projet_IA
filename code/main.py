@@ -34,7 +34,7 @@ def obtenir_donnees_ligue(code_ligue, saison):
     endpoint = f"competitions/{code_ligue}/matches?season={saison}"
     return recuperer_donnees(endpoint)
 
-def obtenir_donnees_toutes_ligues_5_saisons():
+def obtenir_donnees_toutes_ligues_3_saisons():
     ligues = obtenir_liste_ligues()
     donnees_globales = []
     annee_actuelle = 2024
@@ -47,7 +47,7 @@ def obtenir_donnees_toutes_ligues_5_saisons():
             if donnees_ligue:
                 donnees_preparees = preparer_donnees(donnees_ligue)
                 donnees_globales.append(donnees_preparees)
-                time.sleep(10) # 10 car max 10req/min
+                time.sleep(10) # max 10req/min
 
     return pd.concat(donnees_globales, ignore_index=True) if donnees_globales else None
 
@@ -67,24 +67,34 @@ def preparer_donnees(donnees_matches):
 
 def tracer_performance_equipes(donnees):
     performance = donnees.groupby("equipe_domicile")["score_domicile"].sum().sort_values(ascending=False).head(10)
-    performance.plot(kind="bar", figsize=(10, 6))
+    performance.plot(kind="bar", figsize=(10, 6), color="darkgreen")
     plt.title("Top 10 des équipes à domicile (buts marqués)")
     plt.xlabel("Équipe")
     plt.ylabel("Buts")
     plt.tight_layout()
     plt.show()
 
+    performance = donnees.groupby("equipe_exterieur")["score_exterieur"].sum().sort_values(ascending=False).head(10)
+    performance.plot(kind="bar", figsize=(10, 6), color="darkred")
+    plt.title("Top 10 des équipes à l'exterieur (buts marqués)")
+    plt.xlabel("Équipe")
+    plt.ylabel("Buts")
+    plt.tight_layout()
+    plt.show()
+
     moyennes_domicile = donnees.groupby("equipe_domicile")["score_domicile"].mean()
-    plt.hist(moyennes_domicile, bins=10, edgecolor='black')
+    plt.hist(moyennes_domicile, bins=10, edgecolor='black', color="darkgreen")
     plt.title("Répartition des scores moyens à domicile")
     plt.xlabel("Score moyen")
     plt.ylabel("Nombre d'équipes")
     plt.tight_layout()
     plt.show()
 
-    plt.boxplot(donnees["score_domicile"].dropna(), vert=False, patch_artist=True)
-    plt.title("Répartition des scores à domicile")
-    plt.xlabel("Score")
+    moyennes_domicile = donnees.groupby("equipe_exterieur")["score_exterieur"].mean()
+    plt.hist(moyennes_domicile, bins=10, edgecolor='black', color="darkred")
+    plt.title("Répartition des scores moyens à l'exterieur")
+    plt.xlabel("Score moyen")
+    plt.ylabel("Nombre d'équipes")
     plt.tight_layout()
     plt.show()
 
@@ -132,8 +142,8 @@ def predire_score_match_interligue(modele_domicile, modele_exterieur, equipe_dom
     return int(score_dom), int(score_ext)
 
 if __name__ == "__main__":
-    print("\nTéléchargement des données pour toutes les ligues et les 5 dernières saisons...")
-    donnees_matches = obtenir_donnees_toutes_ligues_5_saisons()
+    print("\nTéléchargement des données pour toutes les ligues et les 3 dernières saisons...")
+    donnees_matches = obtenir_donnees_toutes_ligues_3_saisons()
 
     if donnees_matches is not None:
         print("Préparation des données...")
@@ -151,7 +161,7 @@ if __name__ == "__main__":
     equipe_ext = input("Choisissez une équipe à l'extérieur > ")
 
     while equipe_dom not in equipes or equipe_ext not in equipes:
-        print("Veuillez choisir des équipes valides.")
+        print("\nVeuillez choisir des équipes valides.\n")
         equipe_dom = input("Choisissez une équipe à domicile > ")
         equipe_ext = input("Choisissez une équipe à l'extérieur > ")
 
